@@ -17,6 +17,7 @@ const (
 var objs sync.Map = sync.Map{}
 
 // Register 注册对象
+// 注册进来的对象尽量是指针类型，这样才可以修改它的属性，为它注入
 func Register(name string, v interface{}) {
 	objs.Store(name, reflect.ValueOf(v))
 }
@@ -59,11 +60,27 @@ func (e ErrMissedInjectField) Error() string {
 
 func Inject(v interface{}) (err error) {
 	value := reflect.ValueOf(v)
+	return inject(value)
+}
+
+func InjectAll() {
+	f := func(key interface{}, v interface{}) bool {
+		value := v.(reflect.Value)
+		err := inject(value)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return true
+	}
+	objs.Range(f)
+
+}
+func inject(value reflect.Value) (err error) {
 	if value.Kind() == reflect.Ptr {
 		value = value.Elem()
 	}
 	if !value.CanSet() {
-		return errors.New(reflect.TypeOf(v).String() + " CanSet() is false,please give an pointer of " + reflect.TypeOf(v).String())
+		return errors.New(value.Type().String() + " CanSet() is false,please give an pointer of " + value.Type().String())
 	}
 
 	for i := 0; i < value.NumField(); i++ {

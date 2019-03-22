@@ -27,6 +27,26 @@ func TestInject(t *testing.T) {
 
 }
 
+func TestInjectAll(t *testing.T) {
+	Register("run", &Runner{}) //以run为名注册 Runner
+	Register("fly", &Bird{})
+	people := &People{}
+	Register("people", people)
+	InjectAll() //注入带有Tag:"auto"的所有对象
+
+	if people.Run == nil {
+		t.Error("people.Run注入失败")
+	} else {
+		people.Run.Run()
+	}
+	if people.fly == nil {
+		t.Error("people.fly注入失败")
+	} else {
+		people.fly.Fly()
+	}
+
+}
+
 type IRun interface {
 	Run()
 }
